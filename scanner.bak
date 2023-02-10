@@ -1,0 +1,6 @@
+#lang racket
+
+(define (scanner str)
+  (file->lines str))
+
+(scanner "file01.txt")
