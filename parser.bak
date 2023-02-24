@@ -1,0 +1,109 @@
+#lang racket
+
+(define (fileAsList str)
+  (string-split
+    (string-trim
+      (string-replace
+        (string-replace
+          (string-replace
+            (string-replace (file->string str) "\n" " ") ;Read in the file as a string, replace all \n characters with a space
+            ;(string-replace str "\n" " ")
+          "\r" " ") ;replace all \r characters with a space
+        "(" "( ") ;separate left parentheses from whatever it is directly next to
+      ")" " )") ;separate right parentheses from whatever it is directly next to
+    " ")) ;split the string into a list with spaces as the separator
+  ;(define temp (file->list str))
+  ;(file->list str)
+  ;(removeSpaces temp) ;remove all the unnecessary whitespaces
+  )
+
+(define (remove token L)
+  (if (equal? token (first L))
+      (rest L)
+      #f
+      ;(parseError)
+      ))
+
+(define (program L)
+  (if (equal? (first L) idx)
+  (lineList L))
+
+
+
+
+(define (string-alphabetic? str) ;Algorithm from discussion board post
+   (define (iter ch-list)
+       (if (empty? ch-list)
+          #t
+          (if (char-alphabetic? (first ch-list))
+              (iter (rest ch-list))
+              #f)))
+     (iter (string->list str)))
+
+(define (string-numeric? str) ;Same as string-alphabetic? algortithm but tests for numbers only
+  (define (iter ch-list)
+    (if (empty? ch-list)
+        #t
+        (if (char-numeric? (first ch-list))
+            (iter (rest ch-list))
+            #f)))
+  (iter (string->list str)))
+
+(define (flagger str)
+  (cond
+    [(string-numeric? str) 'idx] ;If the string is only numbers then return idx
+    [(string-alphabetic? str) ;if the string is fully alphabetic
+      (cond
+        [(equal? str "if") 'if]
+        [(equal? str "then") 'then]
+        [(equal? str "goto") 'goto]
+        [(equal? str "gosub") 'gosub]
+        [(equal? str "return") 'return]
+        [(equal? str "read") 'read]
+        [(equal? str "write") 'write]
+        [else 'id])]
+    [else
+     (cond
+        [(equal? str ":") 'colon]
+        [(equal? str "(") 'lparen]
+        [(equal? str ")") 'rparen]
+        [(equal? str "$$") '$$]
+        [(equal? str "+") 'plus]
+        [(equal? str "-") 'minus]
+        [(equal? str "=") 'equals]
+        [else 'err])]))
+    
+    
+
+(define (scanner tokens)
+  (println tokens)
+;  (set! tokens (map (lambda (x) ;changes all entries in the list to be a string data type instead of datum
+ ;        (if (number? x)
+  ;           (number->string x)
+   ;          (~a x))) tokens))
+  (set! tokens (map flagger tokens))
+  (println tokens)
+  )
+
+
+(define (parse fileName)
+  (define tokens (fileAsList fileName))
+  (scanner tokens))
+
+;(define (parse fileName)
+ ; (define tokenList (for/list ([line (file->lines fileName)])
+  ;  (fileAsList line)))
+   ; (scanner tokenList))
+
+
+(parse "file01.txt")
+;(println " ")
+;(parse "file02.txt")
+;(println " ")
+;(parse "file03.txt")
+;(println " ")
+;(parse "file04.txt")
+;(println " ")
+;(parse "file05.txt")
+;(println " ")
+;(parse "file06.txt")
