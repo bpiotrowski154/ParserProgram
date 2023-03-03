@@ -7,115 +7,74 @@
         (string-replace
           (string-replace
             (string-replace (file->string str) "\n" " ") ;Read in the file as a string, replace all \n characters with a space
-            ;(string-replace str "\n" " ")
           "\r" " ") ;replace all \r characters with a space
         "(" "( ") ;separate left parentheses from whatever it is directly next to
       ")" " )") ;separate right parentheses from whatever it is directly next to
-    " ")) ;split the string into a list with spaces as the separator
-  ;(define temp (file->list str))
-  ;(file->list str)
-  ;(removeSpaces temp) ;remove all the unnecessary whitespaces
-  )
+    " "))) ;split the string into a list with spaces as the separator
 
-(define (remove token L) 
-  (if (equal? token (first L))
-      (rest L)
-      #f
-      ;(parseError)
-      ))
 
 (define (program L)
-  (if (equal? (first L) 'idx)
-      ((lineList L) (remove '$$ L))
-      #f
-      ;(parseError)
-      ))
+  (if (pair? (first L))  ;Check if the first token is an index
+      (if (first (lineList L))
+          (println "ACCEPTED")
+          (printf "SYNTAX ERROR ON LINE ~a" (rest (lineList L))))
+      (println "SYNTAX ERROR: NO LINE NUMBER")))
+
+;(define (lineList L)
+;  (cond
+;    [(equal? '$$ (first L)) '(#t '())]
+;    [(equal? 'err (first L)) #f]
+;    [(equal? 'idx (first (first L))) (lineList (line L))]
+;    [else #f  ;(parseError)
+;     ]))
 
 (define (lineList L)
-  (cond
-    [(equal? '$$ (first L)) #t]
-    [(equal? 'idx (first L)) (line L) (lineList L)]
-    [#f ;(parseError)
-     ]))
+  (if (pair? (first L))
+      (lineList (line L))
+      #f))
 
 (define (line L)
-  (if (equal? (first L) 'idx)
-      (remove 'idx L)
-      ;(parseError)
-      #f)
-  (stmt L)
-  (linetail L))
+  (if (equal? (first (first L)) 'idx)
+      (linetail (stmt (rest L)))
+      #f))
+  ;parseError)
 
 (define (stmt L)
   (cond
-    [(equal? (first L) 'id)
-     ((remove 'id L)
-      (remove 'equals L)
-      (expr L))]
-    
-    [(equal? (first L) 'if)
-     ((remove 'if L)
-      (expr L)
-      (remove 'then L)
-      (stmt L))]
-    
-    [(equal? (first L) 'read)
-     ((remove 'read L)
-      (remove 'id L))]
-    
-    [(equal? (first L) 'write)
-     ((remove 'write L)
-      (expr L))]
-    
-    [(equal? (first L) 'goto)
-     ((remove 'goto L)
-      (remove 'idx L))]
-    
-    [(equal? (first L) 'gosub)
-     ((remove 'gosub L)
-      (remove 'idx L))]
-    
-    [(equal? (first L) 'return) (remove 'return L)]))
-    ;[else parseError]
+    [(equal? (first L) 'id)        (expr (rest (rest L)))] ;removes id and equals from front of list and passes that into expr   
+    [(equal? (first L) 'if)        (stmt (rest (expr (rest L))))] ;removes if from front of list and passes that into expr, removes then from front of list returned by expr and passes that list into stmt    
+    [(equal? (first L) 'read)      (rest (rest L))] ;removes read and id from front of list
+    [(equal? (first L) 'write)     (expr (rest L))] ;removes write from front of list and passes that to expr
+    [(equal? (first L) 'goto)      (rest (rest L))] ;removes goto and idx from front of list
+    [(equal? (first L) 'gosub)     (rest (rest L))] ;removes gosub and idx from front of list
+    [(equal? (first L) 'return) (rest L)]
+    [else #f]))
   
 
 
 (define (linetail L)
   (if (equal? 'colon (first L))
-      ((remove 'colon L) (stmt L))
+      (stmt (rest L));removes colon from front oif the list and passes list into stmt
       L))
       
 
 (define (expr L)
   (cond
-    [(equal? (first L) 'id)
-     ((remove 'id L)
-      (etail L))]
-    [(equal? (first L) 'idx)
-     ((remove 'idx L)
-      (etail L))]
-    [(equal? (first L) 'num)
-     ((remove 'num L)
-      (etail L))]
-    [(equal? (first L) 'lparen)
-     ((remove 'lparen L)
-      (expr L)
-      (remove 'rparen L))]))
-    ;[else parseError]
+    [(equal? (first L) 'id)               (etail (rest L))] ;removes id from front of the list and passes list into etail
+    [(equal? (first (first L)) 'idx)      (etail (rest L))] ;removes idx from front of the list and passes list into etail
+    [(equal? (first L) 'num)              (etail (rest L))] ;removes num from front of the list and passes list into etail
+    [(equal? (first L) 'lparen)           (rest (expr (rest L)))] ;removes lparen from front of the list and passes list into etail then removes rparen from the list returned from etail
+    [else #f]))
 
       
        
 (define (etail L)
   (cond
-    [(equal? (first L) 'plus)
-     ((remove 'plus L)
-     (expr L))]
-    [(equal? (first L) 'minus)
-     ((remove 'minus L)
-     (expr L))]
-    [(equal? (first L) 'equals)
-     ((remove 'equals L)
-      (expr L))]))
+    [(equal? (first L) 'plus)      (expr (rest L))];removes plus from the front of the list and passes list into expr
+    [(equal? (first L) 'minus)     (expr (rest L))];removes minus from the front of the list and passes list into expr
+    [(equal? (first L) 'equals)     (expr (rest L))];removes equals from the front of the list and passes list into expr
+    
+    [else L])) ;epsilon
 
 
 
@@ -140,13 +99,13 @@
 
 (define (idxOrNum? str) ;checks if a number is and idx or a num
   (if (> (string->number str) 0)
-      'idx
+      (list 'idx (string->number str))
       'num))
   
 
 (define (flagger str)
   (cond
-    [(string-numeric? str) (idxOrNum? str)] ;If the string is only numbers then return idx
+    [(string-numeric? str) (idxOrNum? str)] ;If the string is only numbers then return idx and original number
     [(string-alphabetic? str) ;if the string is fully alphabetic
       (cond
         [(equal? str "if") 'if]
@@ -164,38 +123,22 @@
         [(equal? str ")") 'rparen]
         [(equal? str "$$") '$$]
         [(equal? str "+") 'plus]
-        [(equal? str "-") 'minus]
-        [(equal? str "=") 'equals]
+        [(equal? str "-") 'minus]                 
+        [(equal? str "=") 'equals]                    
         [else 'err])]))
     
     
-
 (define (scanner tokens)
   (println tokens)
-;  (set! tokens (map (lambda (x) ;changes all entries in the list to be a string data type instead of datum
- ;        (if (number? x)
-  ;           (number->string x)
-   ;          (~a x))) tokens))
-  ;(set! tokens (map flagger tokens))
   (map flagger tokens))
 
 
 (define (parse fileName)
-  ;(define tokens (fileAsList fileName))
-  ;(scanner tokens)
-  (if (program (scanner (fileAsList fileName)))
-      (println "ACCEPTED")
-      (println "ERROR")))
+  (program (scanner (fileAsList fileName))))
 
-;(define (parse fileName)
- ; (define tokenList (for/list ([line (file->lines fileName)])
-  ;  (fileAsList line)))
-   ; (scanner tokenList))
-
-
-(parse "file01.txt")
+;(parse "file01.txt")
 ;(println " ")
-;(parse "file02.txt")
+(parse "file02.txt")
 ;(println " ")
 ;(parse "file03.txt")
 ;(println " ")

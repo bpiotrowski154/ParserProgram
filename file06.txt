@@ -1,4 +1,4 @@
 100 read A 
 200 read B 
-30000 write A + (B - 1)
+30000 write A + ( B - 1 )
 $$

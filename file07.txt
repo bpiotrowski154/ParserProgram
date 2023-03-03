@@ -1,0 +1,3 @@
+10 read A
+20 read B
+30 write C

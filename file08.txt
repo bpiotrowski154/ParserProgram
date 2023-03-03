@@ -1,0 +1,4 @@
+100 read A
+3000 write B
+300000 erase A + ( B - 1 )
+$$
